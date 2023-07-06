@@ -79,15 +79,31 @@
 // }
 
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
+import 'package:monit/Provider/known_dataProvider.dart';
 import 'package:monit/screens/data_screen.dart';
 import 'package:monit/screens/form.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:provider/provider.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:path/path.dart' as Path;
+import 'package:firebase_core/firebase_core.dart';
+
+import 'backend/database_helper.dart';
 
 String pass = '';
+Image? receivedImage;
+
 void main() {
-  runApp(MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => KnownStudents(),
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -112,6 +128,7 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
   BluetoothDevice? _selectedDevice;
   bool _isConnected = false;
   String _message = '';
+  List<int> receivedData = [];
 
   @override
   void initState() {
@@ -169,7 +186,10 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
   }
 
   void _receiveData() {
+    KnownStudents knownStudents =
+        Provider.of<KnownStudents>(context, listen: false);
     List<int> buffer = []; // Buffer to accumulate incoming data
+    int chunkSize = 64; // Adjust the chunk size to match the sender
 
     _connection!.input?.listen((List<int> data) {
       buffer.addAll(data); // Add incoming data to the buffer
@@ -178,13 +198,106 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
       if (buffer.contains(10)) {
         // Assuming 10 is the delimiter character indicating the end of a message
         String message = utf8.decode(buffer);
-        setState(() {
-          _message = message;
-          pass = _message;
-        });
         buffer.clear(); // Clear the buffer for the next message
+
+        if (message.startsWith('id')) {
+          // Process student ID message
+          setState(() {
+            _message = message;
+            pass = _message;
+            knownStudents.getStudentId(_message);
+          });
+        } else {
+          // Process image data
+          Uint8List imageData = Uint8List.fromList(buffer);
+          buffer.clear(); // Clear the buffer for the next message
+
+          // Check if the received data is equal to or larger than the chunk size
+          while (imageData.length >= chunkSize) {
+            Uint8List chunk =
+                imageData.sublist(0, chunkSize); // Extract the chunk
+            imageData = imageData.sublist(
+                chunkSize); // Remove the extracted chunk from the remaining data
+
+            // Process the chunk (e.g., write it to a file, display in UI, etc.)
+            _processImageChunk(chunk);
+          }
+
+          // Store the remaining data in the buffer for the next message
+          buffer.addAll(imageData);
+        }
       }
     });
+  }
+
+  void _processImageChunk(Uint8List chunk) {
+    // Process the received image chunk as needed (e.g., write to a file, display in UI, etc.)
+    // Example: Write the chunk to a file
+    _writeImageChunkToFile(chunk).then((String imagePath) {
+      // Display the image chunk in the app
+      setState(() {
+        receivedImage = Image.file(File(imagePath));
+      });
+    });
+  }
+
+  Future<String> _writeImageChunkToFile(Uint8List chunk) async {
+    Directory appDir = await getApplicationDocumentsDirectory();
+    String imagePath = '${appDir.path}/received_image_chunk.jpg';
+
+    File imageChunkFile = File(imagePath);
+    await imageChunkFile.writeAsBytes(chunk);
+
+    return imagePath;
+  }
+
+  // void _receiveData() {
+  //   KnownStudents knownStudents =
+  //       Provider.of<KnownStudents>(context, listen: false);
+  //   List<int> buffer = []; // Buffer to accumulate incoming data
+
+  //   _connection!.input?.listen((List<int> data) {
+  //     buffer.addAll(data); // Add incoming data to the buffer
+  //     print('buffer $buffer');
+  //     // Check if a complete message is received
+  //     if (buffer.contains(10)) {
+  //       // Assuming 10 is the delimiter character indicating the end of a message
+  //       String message = utf8.decode(buffer);
+
+  //       if (message.startsWith('id')) {
+  //         // Process student ID message
+  //         setState(() {
+  //           _message = message;
+  //           pass = _message;
+  //           knownStudents.getStudentId(_message);
+  //         });
+  //         buffer.clear(); // Clear the buffer for the next message
+  //       } else {
+  //         // Process image data
+  //         Uint8List imageData = Uint8List.fromList(buffer);
+  //         print(imageData);
+  //         buffer.clear(); // Clear the buffer for the next message
+
+  //         // Write the image data to a file (optional)
+  //         _writeImageDataToFile(imageData).then((String imagePath) {
+  //           // Display the image in the app
+  //           setState(() {
+  //             receivedImage = Image.file(File(imagePath));
+  //           });
+  //         });
+  //       }
+  //     }
+  //   });
+  // }
+
+  Future<String> _writeImageDataToFile(Uint8List imageData) async {
+    Directory appDir = await getApplicationDocumentsDirectory();
+    String imagePath = '${appDir.path}/received_image.jpg';
+
+    File imageFile = File(imagePath);
+    await imageFile.writeAsBytes(imageData);
+
+    return imagePath;
   }
 
   void _navigateToNextScreen(BuildContext context) {
@@ -259,6 +372,8 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
               onChanged: (value) {
                 setState(() {
                   _message = value;
+
+                  ;
                 });
               },
             ),
@@ -277,7 +392,6 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
 class MyHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
     return (MaterialApp(
         home: DefaultTabController(
       initialIndex: 1,
@@ -286,6 +400,14 @@ class MyHomePage extends StatelessWidget {
         appBar: AppBar(
           title: Text('Monitt'),
           centerTitle: true,
+          actions: [
+            IconButton(
+              icon: Icon(Icons.refresh),
+              onPressed: () {
+                // Sync();
+              },
+            ),
+          ],
           bottom: const TabBar(
             tabs: <Widget>[
               Tab(
@@ -313,5 +435,110 @@ class MyHomePage extends StatelessWidget {
         ),
       ),
     )));
+  }
+}
+
+Future<void> initializeFirebase() async {
+  await Firebase.initializeApp();
+}
+
+// Future<void> syncData() async {
+//   late DatabaseHelper _databaseHelper;
+//   try {
+//     // Initialize Firebase
+//     await initializeFirebase();
+//     _databaseHelper = DatabaseHelper.instance;
+
+//     // Access your local database using _databaseHelper instance
+//     List<Map<String, dynamic>> localData = await _databaseHelper.getStudents();
+
+//     // Connect to Firebase Storage
+//     FirebaseStorage storage = FirebaseStorage.instance;
+
+//     // Iterate through the local data and upload images to Firebase Storage
+//     for (var student in localData) {
+//       if (student['sync'] == 0) {
+//         // Get the image file associated with the student
+//         File imageFile = File(student['image']);
+
+//         // Generate a unique filename for the image
+//         String fileName = Path.basename(imageFile.path);
+
+//         // Create a storage reference for the image file
+//         Reference storageRef = storage.ref().child('images/$fileName');
+
+//         // Upload the image file to Firebase Storage
+//         TaskSnapshot snapshot = await storageRef.putFile(imageFile);
+
+//         // Get the download URL of the uploaded image
+//         String imageUrl = await snapshot.ref.getDownloadURL();
+
+//         // Update the student's data with the image URL
+//         student['imageUrl'] = imageUrl;
+
+//         // Update the synced value to 1 in your local database
+//         student['sync'] = 1;
+//         await _databaseHelper.updateStudent(student);
+//       }
+//     }
+
+//     print('Data synchronization complete!');
+//   } catch (e) {
+//     print('Data synchronization failed: $e');
+//   }
+// }
+
+Future<void> syncData() async {
+  late DatabaseHelper _databaseHelper;
+  try {
+    // Initialize Firebase
+    await initializeFirebase();
+    _databaseHelper = DatabaseHelper.instance;
+
+    // Access your local database using _databaseHelper instance
+    List<Map<String, dynamic>> localData = await _databaseHelper.getStudents();
+
+    // Connect to Firebase Storage
+    FirebaseStorage storage = FirebaseStorage.instance;
+
+    // Iterate through the local data and upload images to Firebase Storage
+    for (var student in localData) {
+      if (student['sync'] == 0) {
+        // Get the image file associated with the student
+        File imageFile = File(student['image']);
+
+        // Generate a unique filename for the image
+        String fileName = Path.basename(imageFile.path);
+
+        // Create a storage reference for the image file
+        Reference storageRef = storage.ref().child('images/$fileName');
+
+        // Upload the image file to Firebase Storage
+        TaskSnapshot snapshot = await storageRef.putFile(imageFile);
+
+        // Get the download URL of the uploaded image
+        String imageUrl = await snapshot.ref.getDownloadURL();
+        Map<String, dynamic> studentData = {
+          'studentId': student['student_id'],
+          'imageUrl': imageUrl,
+        };
+        // Convert the Map to List<int>
+        List<int> jsonData = utf8.encode(jsonEncode(studentData));
+
+        // Convert List<int> to Uint8List
+        Uint8List data = Uint8List.fromList(jsonData);
+
+        // Store the student ID and image URL in Firebase
+        await storageRef.putData(data);
+
+        // Update the synced value to 1 in your local database
+        student['sync'] = 1;
+        await _databaseHelper.updateStudent(student);
+      }
+    }
+
+    print('Data synchronization complete!');
+  } catch (e) {
+    print('Data synchronization failed: $e');
   }
 }

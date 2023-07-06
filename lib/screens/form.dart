@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:monit/main.dart';
 import 'package:monit/screens/data_screen.dart';
+import 'package:provider/provider.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as path_helper;
 import 'package:path_provider/path_provider.dart';
+import '../Provider/known_dataProvider.dart';
 import '../backend/database_helper.dart';
 
 class FormScreen extends StatefulWidget {
@@ -64,9 +66,10 @@ class _FormScreenState extends State<FormScreen> {
         'guardian_name': _guardianNameController.text,
         'class': _classController.text,
         'image': imagePath,
-        'defaulter': 1
+        'defaulter': 1,
+        'sync': 0,
       };
-
+      print('Student Data: $student');
       List<Map<String, dynamic>> existingStudents =
           await _databaseHelper.getStudents();
       bool isDuplicate = existingStudents.any((existingStudent) =>
@@ -194,6 +197,13 @@ class _FormScreenState extends State<FormScreen> {
                   },
                   decoration: InputDecoration(labelText: 'Class'),
                 ),
+                // TextFormField(
+                //   controller: TextEditingController(text: sync.toString()),
+                //   enabled: false,
+                //   decoration: InputDecoration(
+                //     labelText: 'Synced',
+                //   ),
+                // ),
                 SizedBox(height: 16.0),
                 SizedBox(height: 8.0),
                 SizedBox(height: 16.0),
@@ -220,7 +230,8 @@ class RetrieveScreen extends StatefulWidget {
 }
 
 class _RetrieveScreenState extends State<RetrieveScreen> {
-  final TextEditingController _studentIdController = TextEditingController();
+  String _studentId = '';
+
   late DatabaseHelper _databaseHelper;
   List<Map<String, dynamic>> _students = [];
   List<bool> isChecked = [];
@@ -235,7 +246,7 @@ class _RetrieveScreenState extends State<RetrieveScreen> {
   }
 
   Future<void> _retrieveStudent() async {
-    String studentId = _studentIdController.text;
+    String studentId = _studentId;
     Map<String, dynamic>? student = await _databaseHelper.getStudentById(pass);
 
     if (student != null) {
@@ -283,9 +294,9 @@ class _RetrieveScreenState extends State<RetrieveScreen> {
           children: [
             Text('Enter Student ID:'),
             SizedBox(height: 8.0),
-            TextField(
-              controller: _studentIdController,
-            ),
+            Consumer<KnownStudents>(builder: (context, knownstudents, child) {
+              return Text(knownstudents.id);
+            }),
             SizedBox(height: 16.0),
             Center(
               child: ElevatedButton(
@@ -294,6 +305,8 @@ class _RetrieveScreenState extends State<RetrieveScreen> {
               ),
             ),
             SizedBox(height: 16.0),
+            // receivedImage == null
+            //     ?
             Expanded(
               child: ListView.builder(
                 itemCount: _students.length,
@@ -399,6 +412,23 @@ class _RetrieveScreenState extends State<RetrieveScreen> {
                                               ],
                                             ),
                                           ),
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                left: 130.0),
+                                            child: Row(
+                                              children: [
+                                                Text(
+                                                  'Synced: ',
+                                                  textAlign: TextAlign.left,
+                                                  style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 16),
+                                                ),
+                                                Text('${student['sync']}'),
+                                              ],
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     ),
@@ -489,7 +519,11 @@ class _RetrieveScreenState extends State<RetrieveScreen> {
                       });
                 },
               ),
-            ),
+            )
+            // : Image(
+            //     image: receivedImage!
+            //         .image, // Access the ImageProvider if receivedImage is not null
+            //   )
           ],
         ),
       ),

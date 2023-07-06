@@ -18,6 +18,7 @@ class DatabaseHelper {
   String colClass = 'class';
   String colImage = 'image';
   String colDefaulter = 'defaulter';
+  String colSync = 'sync';
 
   Future<Database?> get db async {
     if (_db == null) {
@@ -37,7 +38,7 @@ class DatabaseHelper {
     await db.execute(
       'CREATE TABLE $studentTable($colId INTEGER AUTO_INCREMENT, '
       '$colStudentId TEXT PRIMARY KEY, $colStudentName TEXT, $colGuardianName TEXT, '
-      '$colClass TEXT, $colImage TEXT, $colDefaulter REAL)',
+      '$colClass TEXT, $colImage TEXT, $colDefaulter REAL, $colSync TEXT)',
     );
   }
 

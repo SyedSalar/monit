@@ -137,6 +137,21 @@ class _DataScreenState extends State<DataScreen> {
                                       ],
                                     ),
                                   ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 130.0),
+                                    child: Row(
+                                      children: [
+                                        Text(
+                                          'Synced: ',
+                                          textAlign: TextAlign.left,
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16),
+                                        ),
+                                        Text('${_students[index]['sync']}'),
+                                      ],
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
