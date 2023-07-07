@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "305403791246",
+    "project_id": "monit-8e5f9",
+    "storage_bucket": "monit-8e5f9.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:305403791246:android:f7474c7971875129adc6df",
+        "android_client_info": {
+          "package_name": "com.example.monit"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "305403791246-ut31rohg2h7ei2rkl3s74mka83kpleqf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyACslFL-bxg-1FVY-PjG8JdVr708IDq3TQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "305403791246-ut31rohg2h7ei2rkl3s74mka83kpleqf.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

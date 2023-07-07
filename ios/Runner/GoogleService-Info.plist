@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>305403791246-3127qscr0f4iunt4cesfe8fpvpdk7aed.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.305403791246-3127qscr0f4iunt4cesfe8fpvpdk7aed</string>
+	<key>API_KEY</key>
+	<string>AIzaSyABan2kGCD4eDROcagq_2Ch4VJ6u_XnE8s</string>
+	<key>GCM_SENDER_ID</key>
+	<string>305403791246</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.example.monit</string>
+	<key>PROJECT_ID</key>
+	<string>monit-8e5f9</string>
+	<key>STORAGE_BUCKET</key>
+	<string>monit-8e5f9.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:305403791246:ios:c09b4a340f6b1360adc6df</string>
+</dict>
+</plist>
